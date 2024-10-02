@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --primary-color: #A8A8A8; /* Neutral light gray for primary elements */
+    --secondary-color: #6C6C6C; /* Medium gray for secondary elements */
+    --font-color: #E5E5E5; /* Light gray for font, providing good contrast */
+    --bg-color: #1E1E1E; /* Dark charcoal background */
+    --heading-color: #CFCFCF; /* Soft gray for headings */
+
+    /* Additional color suggestions */
+    --accent-color: #F28B82; /* Subtle coral pink for accents */
+    --success-color: #81C784; /* Soft muted green for success */
+    --warning-color: #FFB74D; /* Soft orange for warnings */
+    --error-color: #E57373; /* Muted red for errors */
+    --light-bg-color: #2E2E2E; /* Slightly lighter gray for section backgrounds */
+    --muted-font-color: #B3B3B3; /* Muted gray for less prominent text */
+}
+
+
+body {
+    background: var(--bg-color);
+    color: var(--font-color);
+}
