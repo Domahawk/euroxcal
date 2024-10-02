@@ -7,17 +7,30 @@ import {format} from "date-fns";
 import CurrencyPicker from "./CurrencyPicker.vue";
 import Button from "./Button.vue";
 
+type Amount = {
+  currency: String,
+  value: Number,
+}
+
+type ExchangeRate = {
+  currency: String,
+  value: Number,
+}
+
 const askCurrencyAmount: Ref<Number | String | null> = ref(null);
 const currency: Ref<String> = ref("");
-const exchangeRate: Ref<Number> = ref(0);
+const exchangeRates: Ref<Array<ExchangeRate>> = ref([]);
 const date: Ref<Date | null> = ref(null);
-const amountInEuros: Ref<Number> = ref(0);
+const calculatedAmounts: Ref<Array<Amount>> = ref([]);
 const apiResponse: Ref<String> = ref(null);
 const DPTextInputOptions = {
   enterSubmit: true,
   format: "dd-MM-yyyy"
 };
 
+const dateEur = computed(() => {
+  return date.value?.getFullYear() > 2022
+});
 
 const isButtonDisabled = computed(() => {
   return askCurrencyAmount.value === null || date.value === null;
@@ -26,7 +39,7 @@ const isButtonDisabled = computed(() => {
 const onBlur = () => {
   if (askCurrencyAmount.value === null || askCurrencyAmount.value === "") {
     askCurrencyAmount.value = null;
-    amountInEuros.value = 0;
+    amountInEuros.value = [];
 
     return;
   }
@@ -35,23 +48,44 @@ const onBlur = () => {
 };
 
 const calculate = async () => {
+  exchangeRates.value = [];
+  calculatedAmounts.value = [];
+
   let response = await $fetch('/api/hnb', {
     method: 'POST',
     body: {
       currencyCode: currency.value,
       date: format(date.value, 'yyyy-MM-dd'),
+      dateEur: dateEur.value,
     }
   });
 
   apiResponse.value = response.data
-  console.log(apiResponse.value)
-
-  exchangeRate.value = parseFloat(apiResponse.value[0].srednji_tecaj.replace(/,/g, "."))
-
   let amount: Big = new Big(askCurrencyAmount.value);
 
-  amountInEuros.value = amount.div(exchangeRate.value).toFixed(2);
+  if (!dateEur.value) {
+    let rate = getExchangeRate(response.data, currency.value.toUpperCase())
+
+    exchangeRates.value.push({currency: 'To KN', value: rate});
+    amount = calculateCurrencyToKn(amount, rate);
+    calculatedAmounts.value.push({currency: 'Amount in KN', value: amount})
+  }
+
+  let toEurER = getExchangeRate(response.data, dateEur.value ? currency.value.toUpperCase() : 'EUR');
+
+  exchangeRates.value.push({currency: 'To EUR', value: toEurER})
+  calculatedAmounts.value.push({currency: 'Amount in EUR', value: amount.div(toEurER).toFixed(2)})
 };
+
+const calculateCurrencyToKn = (askCurrencyAmount: Big, exchangeRate: Number): Big => {
+  return askCurrencyAmount.times(exchangeRate);
+}
+
+const getExchangeRate = (responseData: array, toCurrency: String): Object => {
+  let exchangeRate = responseData.find((item: Object): Object => item.valuta === toCurrency).srednji_tecaj;
+
+  return parseFloat(exchangeRate.replace(/,/g, "."));
+}
 
 </script>
 
@@ -59,7 +93,8 @@ const calculate = async () => {
   <div class="min-h-screen min-w-max mt-[30px] flex flex-col">
     <div class="min-w-max min-h-max flex m-[20px]">
 
-      <div class="w-1/2 h-[500px] p-[50px] m-[50px] flex flex-col items-center justify-between bg-[--light-bg-color] rounded-md">
+      <div
+          class="w-1/2 h-[500px] p-[50px] m-[50px] flex flex-col items-center justify-between bg-[--light-bg-color] rounded-md">
         <div class="min-w-max flex flex-col justify-around items-center">
           <label>Pick a date</label>
           <VueDatePicker
@@ -87,14 +122,16 @@ const calculate = async () => {
         </div>
       </div>
 
-      <div class="w-1/2 h-[500px] p-[50px] m-[50px] flex flex-col items-center justify-center bg-[--light-bg-color] rounded-md">
+      <div
+          class="w-1/2 h-[500px] p-[50px] m-[50px] flex flex-col items-center justify-center bg-[--light-bg-color] rounded-md">
         <div class="flex flex-col justify-around items-center">
-          <p>Amount in Euros</p>
-          <p id="amount-in-eur">{{ amountInEuros }}</p>
+          <p>Calculation</p>
+
+          <p v-for="amount in calculatedAmounts"> {{ amount.currency }} - {{ amount.value }}</p>
         </div>
         <div class="min-w-max flex flex-col items-center justify-center">
           <p>Exchange rate</p>
-          <p>{{ exchangeRate }}</p>
+          <p v-for="exRate in exchangeRates"> {{ exRate.currency }} - {{ exRate.value }} </p>
         </div>
       </div>
 
