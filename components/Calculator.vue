@@ -90,6 +90,9 @@ const getExchangeRate = (responseData: array, toCurrency: String): Object => {
 </script>
 
 <template>
+  <div class="min-w-max flex flex-col items-center justify-center min-h-[100px] bg-[--warning-color]">
+    <H2>Dates before year 2023 will calculate the amount from asked currency to KN then from KN to EUR</H2>
+  </div>
   <div class="min-h-screen min-w-max mt-[30px] flex flex-col">
     <div class="min-w-max min-h-max flex m-[20px]">
 

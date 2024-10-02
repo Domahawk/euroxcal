@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
     const queryParams = `?datum-primjene=${body.date}&${currencyParam}`
     const response = await $fetch(`https://api.hnb.hr/${apiVersion}${queryParams}`);
-    
+
     return {
         data: response
     };
